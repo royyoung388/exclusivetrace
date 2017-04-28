@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable\\composer_icn_plus_pressed.png",
+        "source": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\bundles\\debug\\res\\drawable\\composer_icn_plus_pressed.png"
+    },
+    {
+        "merged": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable\\composer_button_normal.png",
+        "source": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\bundles\\debug\\res\\drawable\\composer_button_normal.png"
+    },
+    {
+        "merged": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable\\composer_button.xml",
+        "source": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\bundles\\debug\\res\\drawable\\composer_button.xml"
+    },
+    {
+        "merged": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable\\composer_icn_plus.xml",
+        "source": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\bundles\\debug\\res\\drawable\\composer_icn_plus.xml"
+    },
+    {
+        "merged": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable\\composer_icn_plus_normal.png",
+        "source": "E:\\AndroidProject\\ExclusiveTrace\\ArcMenu\\build\\intermediates\\bundles\\debug\\res\\drawable\\composer_icn_plus_normal.png"
+    }
+]
