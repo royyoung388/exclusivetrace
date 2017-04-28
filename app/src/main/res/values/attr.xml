@@ -7,10 +7,12 @@
         <enum name="right_bottom" value="3" />
     </attr>
     <attr name="radius" format="dimension"></attr>
+    <attr name="angle" format="integer"></attr>
 
     <declare-styleable name="ArcMenu">
         <attr name="position" />
         <attr name="radius" />
+        <attr name="angle" />
     </declare-styleable>
 
 </resources>

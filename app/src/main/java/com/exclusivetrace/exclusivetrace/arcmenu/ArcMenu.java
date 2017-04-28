@@ -33,20 +33,28 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
     //菜单按钮的位置
     private Position mPosition = Position.LEFT_BOTTOM;
 
+    //方位的枚举型
     private enum Position {
         LEFT_TOP, RIGHT_TOP, LEFT_BOTTOM, RIGHT_BOTTOM;
     }
 
     //赋给按钮的id值
     private final int ADD_BT_ID = 0;
+
     //按钮
     private View bt_add;
 
     //菜单半径
     private int mRadius = 100;
 
-    //按钮状态
-    private Boolean mStatus = false;
+    //菜单的角度
+    private double angle = Math.PI / 2;
+
+    //按钮打开状态
+    private Boolean mStatus_arcmenu = false;
+
+    //登录子菜单打开状态
+    private Boolean mStatus_login = false;
 
     //接口变量
     private OnMenuClickListener onMenuClickListener;
@@ -105,6 +113,9 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
                             (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 100f,
                                     getResources().getDisplayMetrics()));
                     break;
+                case R.styleable.ArcMenu_angle:
+                    angle = typedValue.getInt(attr, 90) / 180;
+                    break;
             }
         }
         typedValue.recycle();
@@ -114,74 +125,91 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         System.out.println("测量" + getChildCount());
 
+        angle = Math.PI * angle / (getChildCount() - 4);
+        System.out.println("angle1:" + angle);
+        angle = Math.PI * (80 / 180.0) / (getChildCount() - 4);
+        System.out.println("angle2:" + angle);
+
         for (int i = 0; i < getChildCount(); i++) {
             getChildAt(i).measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+    //放入控件
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         if (changed) {
             System.out.println("放入onLayout");
             //最后一个是按钮，放入按钮
-            layoutButton();
+            onLayoutButton();
 
-            int childCount = getChildCount();
+            //放入arcmenu菜单
+            onLayoutArcmenu();
 
-            //除了最后的倒数2,3是登录的之外，其余都是菜单项
-            //一个夹角的度数
-            double rad = Math.PI / 2 / (childCount - 4);
-            for (int i = 0; i < childCount - 3; i++) {
-                View child = getChildAt(i);
-                child.setVisibility(GONE);
+            //放入login子菜单
+            onLayoutLogin();
+        }
+    }
 
-                //在左上排布是顺时针
-                int cl = (int) (mRadius * Math.cos(rad * i));
-                int ct = (int) (mRadius * Math.sin(rad * i));
+    //放入arcmenu菜单
+    private void onLayoutArcmenu() {
+        int childCount = getChildCount();
 
-                int cwidth = child.getMeasuredWidth();
-                int cheight = child.getMeasuredHeight();
+        //除了第1，2,是登录的子菜单和最后一个按钮之外，其余都是菜单项
+        for (int i = 2; i < childCount - 1; i++) {
+            View child = getChildAt(i);
+            child.setVisibility(GONE);
 
-                if (mPosition == Position.RIGHT_TOP || mPosition == Position.RIGHT_BOTTOM)
-                    cl = getMeasuredWidth() - cwidth - cl;
+            //在左上排布是顺时针
+            int cl = (int) (mRadius * Math.cos(angle * (i - 2)));
+            int ct = (int) (mRadius * Math.sin(angle * (i - 2)));
 
-                if (mPosition == Position.LEFT_BOTTOM || mPosition == Position.RIGHT_BOTTOM)
-                    ct = getMeasuredHeight() - cheight - ct;
+            int cwidth = child.getMeasuredWidth();
+            int cheight = child.getMeasuredHeight();
 
-                child.layout(cl, ct, cl + cwidth, ct + cheight);
-            }
+            if (mPosition == Position.RIGHT_TOP || mPosition == Position.RIGHT_BOTTOM)
+                cl = getMeasuredWidth() - cwidth - cl;
 
-            //对最后的倒数2，3登录子菜单项做处理
-            //偏移和上方最后一个一样， 为childcout - 4
-            for (int i = 0; i < 2; i++) {
-                View child = getChildAt(childCount + i - 3);
-                child.setVisibility(GONE);
+            if (mPosition == Position.LEFT_BOTTOM || mPosition == Position.RIGHT_BOTTOM)
+                ct = getMeasuredHeight() - cheight - ct;
 
-                //控件自己的大小
-                int cwidth = child.getMeasuredWidth();
-                int cheight = child.getMeasuredHeight();
+            child.layout(cl, ct, cl + cwidth, ct + cheight);
+        }
+    }
 
-                //在左上排布最下面
-                //右边填充和母菜单一样
-                //为了缩小之间的距离，有一些度量的不同
-                int cl = (int) (mRadius * Math.cos(rad * (childCount - 4)));
-                //倒数第3个为子菜单的第一个，倒数第2个为子菜单第二个
-                int ct = (int) (mRadius * Math.sin(rad * (childCount - 4)) * (i + 2)) - (i + 1) * cwidth / 2;
+    //放入login子菜单
+    private void onLayoutLogin() {
+        int childCount = getChildCount();
+        //对第1，2登录子菜单项做处理
+        //偏移的角度和上方最后一个一样， 为childcout - 4
+        //因为控件的上下层关系，1子菜单是最外面的
+        for (int i = 0; i < 2; i++) {
+            View child = getChildAt(i);
+            //child.setVisibility(GONE);
 
-                if (mPosition == Position.RIGHT_TOP || mPosition == Position.RIGHT_BOTTOM)
-                    cl = getMeasuredWidth() - cwidth - cl;
+            //控件自己的大小
+            int cwidth = child.getMeasuredWidth();
+            int cheight = child.getMeasuredHeight();
 
-                if (mPosition == Position.LEFT_BOTTOM || mPosition == Position.RIGHT_BOTTOM)
-                    ct = getMeasuredHeight() - cheight - ct;
+            //在左上排布最下面
+            //右边填充和母菜单一样
+            //为了缩小之间的距离，进行了一些处理
+            int cl = (int) (Math.cos(angle * (childCount - 4)) * (mRadius * (3 - i) - (2 - i) * cwidth / 1.5));
+            int ct = (int) (Math.sin(angle * (childCount - 4)) * (mRadius * (3 - i) - (2 - i) * cheight / 1.5));
 
-                child.layout(cl, ct, cl + cwidth, ct + cheight);
-            }
+            if (mPosition == Position.RIGHT_TOP || mPosition == Position.RIGHT_BOTTOM)
+                cl = getMeasuredWidth() - cwidth - cl;
+
+            if (mPosition == Position.LEFT_BOTTOM || mPosition == Position.RIGHT_BOTTOM)
+                ct = getMeasuredHeight() - cheight - ct;
+
+            child.layout(cl, ct, cl + cwidth, ct + cheight);
         }
     }
 
     //放入按钮
-    private void layoutButton() {
+    private void onLayoutButton() {
         System.out.println("放入按钮");
 
         View mButton = getChildAt(getChildCount() - 1);
@@ -211,13 +239,13 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         mButton.layout(l, t, l + width, t + heigh);
     }
 
-    //点击事件
+    //按钮的点击事件
     @Override
     public void onClick(View v) {
         if (bt_add == null)
             bt_add = findViewById(ADD_BT_ID);
         //按钮旋转动画
-        if (!mStatus) {
+        if (!mStatus_arcmenu) {
             rotateView(bt_add, 0f, 45f, 300);
             System.out.println("正向打开旋转");
         } else {
@@ -225,8 +253,11 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             System.out.println("逆向关闭旋转");
         }
 
-        //子控件动画
+        //arcmenu菜单动画
         toggleMenu(200);
+        //如果在登录子菜单打开的情况下，另外的动画
+        if (mStatus_login)
+            loginAnim(100, true);
     }
 
     //按钮旋转动画
@@ -242,20 +273,19 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         view.startAnimation(rotateAnimation);*/
     }
 
-    //子控件动画
+    //arcmenu菜单动画
     private void toggleMenu(int durationMills) {
-        int count = getChildCount();
-        //一个夹角的度数
-        double rad = Math.PI / 2 / (count - 4);
+        final int count = getChildCount();
         //子菜单
-        for (int i = 0; i < count - 3; i++) {
+        //除了第1,2个，和最后一个
+        for (int i = 2; i < count - 1; i++) {
             final View child = getChildAt(i);
             child.setVisibility(View.VISIBLE);
 
-            int cl = (int) (mRadius * Math.cos(rad * i));
-            int ct = (int) (mRadius * Math.sin(rad * i));
+            int cl = (int) (mRadius * Math.cos(angle * (i - 2)));
+            int ct = (int) (mRadius * Math.sin(angle * (i - 2)));
 
-            //x,y状态参量，用于计算菜单移动的距离和位置是开始时还是结束时
+            //x,y状态参量，用于计算菜单移动的距离和位置
             int mFlagX = 1;
             int mFlagY = 1;
 
@@ -268,25 +298,18 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             AnimationSet animationSet = new AnimationSet(true);
             Animation animation = null;
 
-            /*AnimatorSet animationSet = new AnimatorSet();
-            ObjectAnimator transXAnim = null;
-            ObjectAnimator transYAnim = null;*/
-
             //没有打开
             //移动动画
-            if (!mStatus) {
+            //为了让控件消失在按钮中间，有一点位置的偏移
+            if (!mStatus_arcmenu) {
                 System.out.println("没有打开子控件旋转动画");
-                /*transXAnim = ObjectAnimator.ofFloat(child, "translationX", mFlagX * cl - mFlagX * 30, 0);
-                transYAnim = ObjectAnimator.ofFloat(child, "translationY", mFlagY * ct - mFlagY * 30, 0);*/
                 animationSet.setInterpolator(new OvershootInterpolator(2));
-                animation = new TranslateAnimation(mFlagX * cl - mFlagX * 30, 0, mFlagY * ct - mFlagY * 30, 0);
+                animation = new TranslateAnimation(mFlagX * cl - mFlagX * 20, 0, mFlagY * ct - mFlagY * 20, 0);
                 child.setClickable(true);
                 child.setFocusable(true);
             } else { //已经打开
                 System.out.println("已经打开子控件旋转动画");
-                /*transXAnim = ObjectAnimator.ofFloat(child, "translationX", 0, mFlagX * cl - mFlagX * 30);
-                transYAnim = ObjectAnimator.ofFloat(child, "translationY", 0, mFlagY * ct - mFlagY * 30);*/
-                animation = new TranslateAnimation(0, mFlagX * cl - mFlagX * 30, 0, mFlagY * ct - mFlagY * 30);
+                animation = new TranslateAnimation(0, mFlagX * cl - mFlagX * 20, 0, mFlagY * ct - mFlagY * 20);
                 child.setFocusable(false);
                 child.setClickable(false);
             }
@@ -303,7 +326,9 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    if (!mStatus) {
+                    System.out.println("动画结束监听");
+                    if (!mStatus_arcmenu) {
+                        System.out.println("控件消失");
                         child.setVisibility(GONE);
                     }
                 }
@@ -312,23 +337,15 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             animation.setDuration(durationMills);
 
             //设置延时
-            animation.setStartOffset((i * 100) / (count - 1));
-            /*transXAnim.setStartDelay((i * 100) / (count - 1));
-            transYAnim.setStartDelay((i * 100) / (count - 1));*/
+            animation.setStartOffset(((i - 2) * 100) / (count - 1));
 
             //设置旋转
-            RotateAnimation rotate = new RotateAnimation(0, 270,
+            RotateAnimation rotate = new RotateAnimation(0, 360,
                     Animation.RELATIVE_TO_SELF, 0.5f,
                     Animation.RELATIVE_TO_SELF, 0.5f);
             rotate.setFillAfter(true);
             rotate.setDuration(durationMills);
 
-            /*ObjectAnimator rotateAnim = ObjectAnimator.ofFloat(child, "rotation", 0, 270);
-            animationSet.setDuration(durationMills);
-            animationSet.setStartDelay((i * 100) / (count - 1));
-            animationSet.play(transXAnim).with(transYAnim).with(rotateAnim);
-            animationSet.start();*/
-            //rotate.start();
             animationSet.addAnimation(rotate);
             animationSet.addAnimation(animation);
             child.startAnimation(animationSet);
@@ -341,36 +358,180 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
                         onMenuClickListener.OnClik();
                     }
                     menuItemClik(index);
-                    changeStatus();
                 }
             });
         }
-        changeStatus();
+        changeArcMenuStatus();
     }
 
-    //改变status
-    private void changeStatus() {
-        mStatus = mStatus ? false : true;
+    //login登录的子菜单动画事件
+    private void loginAnim(int durationMills, Boolean whenOntoClose) {
+        //子菜单
+        for (int i = 0; i < 2; i++) {
+            final View child = getChildAt(i);
+            child.setVisibility(View.VISIBLE);
+
+            //为了缩小之间的距离，有一些度量的不同
+            int cl = (int) (Math.cos(angle * (getChildCount() - 4)) * (mRadius - child.getMeasuredWidth() / 1.5) * (2 - i));
+            //1是最外面的
+            //第1个为子菜单的第一个，第2个为子菜单第二个
+            int ct = (int) (Math.sin(angle * (getChildCount() - 4)) * (mRadius - child.getMeasuredHeight() / 1.5) * (2 - i));
+
+            //x,y状态参量，用于计算菜单移动的距离和位置
+            int mFlagX = 1;
+            int mFlagY = 1;
+
+            if (mPosition == Position.LEFT_TOP || mPosition == Position.LEFT_BOTTOM)
+                mFlagX = -1;
+
+            if (mPosition == Position.LEFT_TOP || mPosition == Position.RIGHT_TOP)
+                mFlagY = -1;
+
+            AnimationSet animationSet = new AnimationSet(true);
+            Animation animation = null;
+
+            //没有打开
+            //移动动画
+            if (!mStatus_login) {
+                System.out.println("没有打开登陆子控件，旋转动画");
+                //animationSet.setInterpolator(new OvershootInterpolator(2));
+                animation = new TranslateAnimation(mFlagX * cl, 0, mFlagY * ct, 0);
+                child.setClickable(true);
+                child.setFocusable(true);
+            } else { //已经打开
+                System.out.println("已经打开登陆子控件，旋转动画");
+                //在打开状态直接关闭所有
+                if (whenOntoClose) {
+                    cl = cl + (int) (Math.cos(angle * (getChildCount() - 4)) * mRadius) + 20 * mFlagX;
+                    ct = ct + (int) (Math.sin(angle * (getChildCount() - 4)) * mRadius) - 20 * mFlagY;
+                    durationMills *= 2;
+                    animation = new TranslateAnimation(0, mFlagX * cl, 0, mFlagY * ct);
+                } else {
+                    //正常关闭
+                    animation = new TranslateAnimation(0, mFlagX * cl, 0, mFlagY * ct);
+                    //设置延时
+                    animationSet.setStartOffset(i == 1 ? durationMills : 0);
+                    child.setFocusable(false);
+                    child.setClickable(false);
+                }
+            }
+
+            //设置动画参数
+            animation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    System.out.println("登录子菜单动画结束监听");
+                    if (!mStatus_login) {
+                        System.out.println("登录子菜单控件消失");
+                        child.setVisibility(GONE);
+                    }
+                }
+            });
+            animation.setFillAfter(true);
+
+
+            //设置旋转
+            RotateAnimation rotate = new RotateAnimation(0, 360,
+                    Animation.RELATIVE_TO_SELF, 0.5f,
+                    Animation.RELATIVE_TO_SELF, 0.5f);
+            rotate.setFillAfter(true);
+
+            animationSet.addAnimation(rotate);
+            animationSet.addAnimation(animation);
+            animationSet.setDuration(durationMills * (2 - i));
+
+            //设置延时
+            //animationSet.setStartOffset(i == 0 ? (mStatus_login ? 0 : durationMills) : (mStatus_login ? durationMills : 0));
+
+            child.startAnimation(animationSet);
+
+            final int index = i;
+            child.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (onMenuClickListener != null) {
+                        onMenuClickListener.OnClik();
+                    }
+                    menuItemClik(index);
+                }
+            });
+        }
+        changeLoginStatus();
     }
 
     //点击菜单项后的处理
     private void menuItemClik(int index) {
-        for (int i = 0; i < getChildCount() - 3; i++) {
-            View child = getChildAt(i);
-            if (i == index) {
-                child.startAnimation(menuBig(300));
-            } else {
-                child.startAnimation(menuSmall(300));
+        //点击登录，打开登录子菜单
+        if (index == getChildCount() - 2) {
+            //如果是登录状态,就打开菜单
+            if (true) {
+                loginAnim(150, false);
             }
-            System.out.println("点击菜单后的处理");
-            child.setFocusable(false);
-            child.setClickable(false);
+        } else {
+            //点击的不是登录按钮
+            //对除了登录子菜单进行处理
+            for (int i = 2; i < getChildCount() - 1; i++) {
+                View child = getChildAt(i);
+                if (i == index) {
+                    //点击的变大
+                    child.startAnimation(menuBig(300));
+                } else {
+                    //没点击的缩小
+                    child.startAnimation(menuSmall(300));
+                }
+
+                System.out.println("点击菜单后的处理");
+                child.setFocusable(false);
+                child.setClickable(false);
+            }
+
+            //当点击的不是登录时,对登录的子菜单处理
+            //打开状态，被点击就有动画
+            if (mStatus_login) {
+                for (int i = 0; i < 2; i++) {
+                    View child = getChildAt(i);
+                    if (i == index) {
+                        //点击的变大
+                        child.startAnimation(menuBig(300));
+                    } else {
+                        //没点击的缩小
+                        child.startAnimation(menuSmall(300));
+                    }
+
+                    System.out.println("点击login菜单后的处理");
+                    child.setFocusable(false);
+                    child.setClickable(false);
+                }
+                changeLoginStatus();
+            }
+
+            //当点击的不是登录时，旋转按钮,并改变status的值
+            if (mStatus_arcmenu && index != getChildCount() - 2) {
+                System.out.println("逆向关闭旋转");
+                rotateView(bt_add, 45f, 0f, 300);
+                changeArcMenuStatus();
+            }
         }
-        //旋转按钮
-        if (mStatus) {
-            rotateView(bt_add, 45f, 0f, 300);
-            System.out.println("逆向关闭旋转");
-        }
+    }
+
+    //改变login按钮的状态
+    private void changeLoginStatus() {
+        System.out.println("改变login按钮的状态");
+        mStatus_login = mStatus_login ? false : true;
+    }
+
+    //改变status
+    private void changeArcMenuStatus() {
+        System.out.println("改变statusarcmenu");
+        mStatus_arcmenu = mStatus_arcmenu ? false : true;
     }
 
     //点击菜单后变大动画
@@ -403,11 +564,14 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         if (bt_add == null)
             bt_add = findViewById(ADD_BT_ID);
         //按钮旋转动画
-        if (mStatus) {
+        if (mStatus_arcmenu) {
             rotateView(bt_add, 45f, 0f, 300);
             System.out.println("逆向关闭旋转");
             //子控件动画
             toggleMenu(200);
+            //登录子菜单动画
+            if (mStatus_login)
+                loginAnim(100, true);
         }
     }
 }

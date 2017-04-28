@@ -16,38 +16,38 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         arcmenu:position="left_bottom"
-        arcmenu:radius="100dp">
+        arcmenu:radius="100dp"
+        arcmenu:angle="90">
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/composer_sun"
-            android:tag="Sun" />
+            android:src="@drawable/composer_sun" />
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/composer_place"
-            android:tag="Place" />
+            android:src="@drawable/composer_place" />
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/composer_sleep"
-            android:tag="Sleep" />
+            android:src="@drawable/composer_sleep" />
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/composer_music"
-            android:tag="Sleep" />
+            android:src="@drawable/composer_music" />
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/composer_thought"
-            android:tag="Sleep" />
+            android:src="@drawable/composer_thought" />
 
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/composer_with" />
 
         <TextView
             android:layout_width="wrap_content"
