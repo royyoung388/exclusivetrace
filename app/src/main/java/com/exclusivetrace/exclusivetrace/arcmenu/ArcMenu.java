@@ -1,14 +1,18 @@
 package com.exclusivetrace.exclusivetrace.arcmenu;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
@@ -51,7 +55,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
     private double angle = Math.PI / 2;
 
     //按钮打开状态
-    private Boolean mStatus_arcmenu = false;
+    public Boolean mStatus_arcmenu = false;
 
     //登录子菜单打开状态
     private Boolean mStatus_login = false;
@@ -61,12 +65,25 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
 
     //点击菜单的点击事件接口
     public interface OnMenuClickListener {
-        void OnClik();
+        void OnClik(int index);
     }
 
     //暴露给外面的设置接口变量的方法
     public void setOnMenuClickListener(OnMenuClickListener onMenuClickListener) {
         this.onMenuClickListener = onMenuClickListener;
+    }
+
+    //接口变量
+    private OnBtClose onBtClose;
+
+    //按钮结束转动时调用的接口
+    public interface OnBtClose {
+        void OnClose();
+    }
+
+    //暴露给外面的设置接口变量的方法
+    public void setOnBtClose(OnBtClose onBtClose) {
+        this.onBtClose = onBtClose;
     }
 
     //构造函数
@@ -125,14 +142,16 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         System.out.println("测量" + getChildCount());
 
-        angle = Math.PI * angle / (getChildCount() - 4);
-        System.out.println("angle1:" + angle);
-        angle = Math.PI * (80 / 180.0) / (getChildCount() - 4);
-        System.out.println("angle2:" + angle);
+        /*angle = Math.PI * angle / (getChildCount() - 4);
+        System.out.println("angle1:" + angle);*/
+        angle = Math.PI * (77 / 180.0) / (getChildCount() - 4);
+        System.out.println("angle:" + angle);
 
-        for (int i = 0; i < getChildCount(); i++) {
+        measureChildren(widthMeasureSpec, heightMeasureSpec);
+
+        /*for (int i = 0; i < getChildCount(); i++) {
             getChildAt(i).measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-        }
+        }*/
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
@@ -186,7 +205,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         //因为控件的上下层关系，1子菜单是最外面的
         for (int i = 0; i < 2; i++) {
             View child = getChildAt(i);
-            //child.setVisibility(GONE);
+            child.setVisibility(GONE);
 
             //控件自己的大小
             int cwidth = child.getMeasuredWidth();
@@ -195,8 +214,8 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             //在左上排布最下面
             //右边填充和母菜单一样
             //为了缩小之间的距离，进行了一些处理
-            int cl = (int) (Math.cos(angle * (childCount - 4)) * (mRadius * (3 - i) - (2 - i) * cwidth / 1.5));
-            int ct = (int) (Math.sin(angle * (childCount - 4)) * (mRadius * (3 - i) - (2 - i) * cheight / 1.5));
+            int cl = (int) (Math.cos(angle * (childCount - 4)) * (mRadius * (3 - i) - (2 - i) * cwidth / 1.3));
+            int ct = (int) (Math.sin(angle * (childCount - 4)) * (mRadius * (3 - i) - (2 - i) * cheight / 1.3));
 
             if (mPosition == Position.RIGHT_TOP || mPosition == Position.RIGHT_BOTTOM)
                 cl = getMeasuredWidth() - cwidth - cl;
@@ -208,7 +227,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         }
     }
 
-    //放入按钮
+    //放入按钮和点击事件的监听
     private void onLayoutButton() {
         System.out.println("放入按钮");
 
@@ -242,6 +261,10 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
     //按钮的点击事件
     @Override
     public void onClick(View v) {
+        if (onMenuClickListener != null) {
+            onMenuClickListener.OnClik(getChildCount() - 1);
+        }
+        //主按钮
         if (bt_add == null)
             bt_add = findViewById(ADD_BT_ID);
         //按钮旋转动画
@@ -264,6 +287,14 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
     private void rotateView(View view, float fromDegrees, float toDegrees, int durationMills) {
         System.out.println("旋转动画");
         ObjectAnimator rotateAnim = ObjectAnimator.ofFloat(view, "rotation", fromDegrees, toDegrees);
+        rotateAnim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                if (!mStatus_arcmenu)
+                    onBtClose.OnClose();
+            }
+        });
         rotateAnim.setDuration(durationMills);
         rotateAnim.start();
         /*RotateAnimation rotateAnimation = new RotateAnimation(fromDegrees, toDegrees,
@@ -273,7 +304,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         view.startAnimation(rotateAnimation);*/
     }
 
-    //arcmenu菜单动画
+    //arcmenu菜单动画和点击事件监听
     private void toggleMenu(int durationMills) {
         final int count = getChildCount();
         //子菜单
@@ -304,12 +335,12 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             if (!mStatus_arcmenu) {
                 System.out.println("没有打开子控件旋转动画");
                 animationSet.setInterpolator(new OvershootInterpolator(2));
-                animation = new TranslateAnimation(mFlagX * cl - mFlagX * 20, 0, mFlagY * ct - mFlagY * 20, 0);
+                animation = new TranslateAnimation(mFlagX * cl - mFlagX * 50, 0, mFlagY * ct - mFlagY * 50, 0);
                 child.setClickable(true);
                 child.setFocusable(true);
             } else { //已经打开
                 System.out.println("已经打开子控件旋转动画");
-                animation = new TranslateAnimation(0, mFlagX * cl - mFlagX * 20, 0, mFlagY * ct - mFlagY * 20);
+                animation = new TranslateAnimation(0, mFlagX * cl - mFlagX * 50, 0, mFlagY * ct - mFlagY * 50);
                 child.setFocusable(false);
                 child.setClickable(false);
             }
@@ -318,10 +349,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             animation.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
-                }
 
-                @Override
-                public void onAnimationRepeat(Animation animation) {
                 }
 
                 @Override
@@ -331,6 +359,11 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
                         System.out.println("控件消失");
                         child.setVisibility(GONE);
                     }
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
                 }
             });
             animation.setFillAfter(true);
@@ -354,17 +387,17 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             child.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (onMenuClickListener != null) {
-                        onMenuClickListener.OnClik();
-                    }
                     menuItemClik(index);
+                    if (onMenuClickListener != null) {
+                        onMenuClickListener.OnClik(index);
+                    }
                 }
             });
         }
         changeArcMenuStatus();
     }
 
-    //login登录的子菜单动画事件
+    //login登录的子菜单动画事件和点击事件监听
     private void loginAnim(int durationMills, Boolean whenOntoClose) {
         //子菜单
         for (int i = 0; i < 2; i++) {
@@ -372,10 +405,10 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             child.setVisibility(View.VISIBLE);
 
             //为了缩小之间的距离，有一些度量的不同
-            int cl = (int) (Math.cos(angle * (getChildCount() - 4)) * (mRadius - child.getMeasuredWidth() / 1.5) * (2 - i));
+            int cl = (int) (Math.cos(angle * (getChildCount() - 4)) * (mRadius - child.getMeasuredWidth() / 1.3) * (2 - i));
             //1是最外面的
             //第1个为子菜单的第一个，第2个为子菜单第二个
-            int ct = (int) (Math.sin(angle * (getChildCount() - 4)) * (mRadius - child.getMeasuredHeight() / 1.5) * (2 - i));
+            int ct = (int) (Math.sin(angle * (getChildCount() - 4)) * (mRadius - child.getMeasuredHeight() / 1.3) * (2 - i));
 
             //x,y状态参量，用于计算菜单移动的距离和位置
             int mFlagX = 1;
@@ -394,7 +427,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             //移动动画
             if (!mStatus_login) {
                 System.out.println("没有打开登陆子控件，旋转动画");
-                //animationSet.setInterpolator(new OvershootInterpolator(2));
+                animationSet.setInterpolator(new OvershootInterpolator(2));
                 animation = new TranslateAnimation(mFlagX * cl, 0, mFlagY * ct, 0);
                 child.setClickable(true);
                 child.setFocusable(true);
@@ -402,8 +435,11 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
                 System.out.println("已经打开登陆子控件，旋转动画");
                 //在打开状态直接关闭所有
                 if (whenOntoClose) {
-                    cl = cl + (int) (Math.cos(angle * (getChildCount() - 4)) * mRadius) + 20 * mFlagX;
-                    ct = ct + (int) (Math.sin(angle * (getChildCount() - 4)) * mRadius) - 20 * mFlagY;
+                    /************
+                     * 这里cl有问题，左边右边偏移不对称，需手动改+ -
+                     **************/
+                    cl = cl + (int) (Math.cos(angle * (getChildCount() - 4)) * mRadius) + 50 * mFlagX;
+                    ct = ct + (int) (Math.sin(angle * (getChildCount() - 4)) * mRadius) - 50 * mFlagY;
                     durationMills *= 2;
                     animation = new TranslateAnimation(0, mFlagX * cl, 0, mFlagY * ct);
                 } else {
@@ -446,10 +482,8 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
 
             animationSet.addAnimation(rotate);
             animationSet.addAnimation(animation);
+            //延时
             animationSet.setDuration(durationMills * (2 - i));
-
-            //设置延时
-            //animationSet.setStartOffset(i == 0 ? (mStatus_login ? 0 : durationMills) : (mStatus_login ? durationMills : 0));
 
             child.startAnimation(animationSet);
 
@@ -457,10 +491,10 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             child.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (onMenuClickListener != null) {
-                        onMenuClickListener.OnClik();
-                    }
                     menuItemClik(index);
+                    if (onMenuClickListener != null) {
+                        onMenuClickListener.OnClik(index);
+                    }
                 }
             });
         }
@@ -482,10 +516,10 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
                 View child = getChildAt(i);
                 if (i == index) {
                     //点击的变大
-                    child.startAnimation(menuBig(300));
+                    child.startAnimation(menuBig(200));
                 } else {
                     //没点击的缩小
-                    child.startAnimation(menuSmall(300));
+                    child.startAnimation(menuSmall(200));
                 }
 
                 System.out.println("点击菜单后的处理");
@@ -500,10 +534,10 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
                     View child = getChildAt(i);
                     if (i == index) {
                         //点击的变大
-                        child.startAnimation(menuBig(300));
+                        child.startAnimation(menuBig(200));
                     } else {
                         //没点击的缩小
-                        child.startAnimation(menuSmall(300));
+                        child.startAnimation(menuSmall(200));
                     }
 
                     System.out.println("点击login菜单后的处理");
@@ -529,7 +563,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
     }
 
     //改变status
-    private void changeArcMenuStatus() {
+    public void changeArcMenuStatus() {
         System.out.println("改变statusarcmenu");
         mStatus_arcmenu = mStatus_arcmenu ? false : true;
     }
@@ -559,11 +593,12 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         return animation;
     }
 
-    //用于点击空白时，外面的类调用关闭菜单的方法
+    //外面的类调用开关菜单的方法
     public void changeArcMenu() {
         if (bt_add == null)
             bt_add = findViewById(ADD_BT_ID);
         //按钮旋转动画
+        //关闭按钮
         if (mStatus_arcmenu) {
             rotateView(bt_add, 45f, 0f, 300);
             System.out.println("逆向关闭旋转");
@@ -572,6 +607,12 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             //登录子菜单动画
             if (mStatus_login)
                 loginAnim(100, true);
+        } else {
+            //打开按钮
+            rotateView(bt_add, 0f, 45f, 300);
+            System.out.println("正向打开旋转");
+            //子控件动画
+            toggleMenu(200);
         }
     }
 }

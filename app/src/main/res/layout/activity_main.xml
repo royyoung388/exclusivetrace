@@ -3,71 +3,43 @@
     xmlns:arcmenu="http://schemas.android.com/apk/res-auto"
     android:id="@+id/map_root_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <!--<com.amap.api.maps.MapView-->
-    <!--android:id="@+id/map"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent" >-->
-    <!--</com.amap.api.maps.MapView>-->
-
-    <com.exclusivetrace.exclusivetrace.arcmenu.ArcMenu
-        android:id="@+id/map_arc_menu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        arcmenu:position="left_bottom"
-        arcmenu:radius="100dp"
-        arcmenu:angle="90">
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/composer_sun" />
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/composer_place" />
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/composer_sleep" />
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/composer_music" />
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/composer_thought" />
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/composer_with" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/map_add_bt" />
-    </com.exclusivetrace.exclusivetrace.arcmenu.ArcMenu>
-
+    android:layout_height="match_parent"
+    android:background="@drawable/map">
 
     <ImageView
-        android:id="@+id/map_start_memory_iamge"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_centerInParent="true"
-        android:src="@drawable/map_start_bt_transition" />
+        android:layout_width="140px"
+        android:layout_height="140px"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="30px"
+        android:layout_marginTop="60px"
+        android:src="@drawable/map_fog" />
 
-    <!--<TextView-->
-        <!--android:layout_width="100px"-->
-        <!--android:layout_height="100px"-->
-        <!--android:layout_alignParentRight="true"-->
-        <!--android:layout_marginRight="40px"-->
-        <!--android:layout_marginTop="40px"-->
-        <!--android:text="12312312312312312312123123133" />-->
+    <RelativeLayout
+        android:id="@+id/map_memory_layout"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_centerInParent="true">
+
+        <ImageView
+            android:id="@+id/map_start_memory_iamge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/map_start_memory" />
+
+        <ImageView
+            android:id="@+id/map_end_memory_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/map_end_memory" />
+    </RelativeLayout>
+
+    <ImageView
+        android:id="@+id/map_arcmenu_bt"
+        android:layout_width="250px"
+        android:layout_height="250px"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="30px"
+        android:layout_marginLeft="50px"
+        android:src="@drawable/arcmenu_bt" />
 </RelativeLayout>
