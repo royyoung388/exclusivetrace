@@ -86,6 +86,19 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         this.onBtClose = onBtClose;
     }
 
+    //接口变量
+    private OnBtOn onBtOn;
+
+    //按钮开始转动时调用的接口
+    public interface OnBtOn {
+        void OnOn();
+    }
+
+    //暴露给外面的设置接口变量的方法
+    public void setOnBtOn(OnBtOn onBtOn) {
+        this.onBtOn = onBtOn;
+    }
+
     //构造函数
     public ArcMenu(Context context) {
         this(context, null);
@@ -289,12 +302,20 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
         ObjectAnimator rotateAnim = ObjectAnimator.ofFloat(view, "rotation", fromDegrees, toDegrees);
         rotateAnim.addListener(new AnimatorListenerAdapter() {
             @Override
+            public void onAnimationStart(Animator animation) {
+                //super.onAnimationStart(animation);
+                System.out.println("按钮动画开始监听");
+                if (!mStatus_arcmenu)
+                    onBtOn.OnOn();
+            }
+            @Override
             public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
+                //这里状态变化了
                 if (!mStatus_arcmenu)
                     onBtClose.OnClose();
             }
         });
+
         rotateAnim.setDuration(durationMills);
         rotateAnim.start();
         /*RotateAnimation rotateAnimation = new RotateAnimation(fromDegrees, toDegrees,

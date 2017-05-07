@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:arcmenu="http://schemas.android.com/apk/res-auto"
     android:id="@+id/map_root_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/map">
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <com.amap.api.maps.MapView
+            android:id="@+id/map_map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </com.amap.api.maps.MapView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#a9000000"/>
+    </RelativeLayout>
+
 
     <ImageView
         android:layout_width="140px"
@@ -12,7 +26,7 @@
         android:layout_alignParentRight="true"
         android:layout_marginRight="30px"
         android:layout_marginTop="60px"
-        android:src="@drawable/map_fog" />
+        android:src="@drawable/map_bt_fog" />
 
     <RelativeLayout
         android:id="@+id/map_memory_layout"
@@ -24,13 +38,15 @@
             android:id="@+id/map_start_memory_iamge"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:src="@drawable/map_start_memory" />
+            android:src="@drawable/map_bt_start_memory" />
 
         <ImageView
             android:id="@+id/map_end_memory_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:src="@drawable/map_end_memory" />
+            android:src="@drawable/map_bt_end_memory"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true" />
     </RelativeLayout>
 
     <ImageView
@@ -41,5 +57,5 @@
         android:layout_alignParentLeft="true"
         android:layout_marginBottom="30px"
         android:layout_marginLeft="50px"
-        android:src="@drawable/arcmenu_bt" />
+        android:src="@drawable/map_arcmenu_bt" />
 </RelativeLayout>

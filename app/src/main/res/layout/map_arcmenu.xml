@@ -17,37 +17,37 @@
         <ImageView
             android:layout_width="144px"
             android:layout_height="144px"
-            android:src="@drawable/arcemun_extra" />
+            android:src="@drawable/map_arcemun_extra" />
 
         <ImageView
             android:layout_width="144px"
             android:layout_height="144px"
-            android:src="@drawable/arcmenu_changepwd" />
+            android:src="@drawable/map_arcmenu_changepwd" />
 
         <ImageView
             android:layout_width="144px"
             android:layout_height="144px"
-            android:src="@drawable/arcmenu_adddiary" />
+            android:src="@drawable/map_arcmenu_adddiary" />
 
         <ImageView
             android:layout_width="144px"
             android:layout_height="144px"
-            android:src="@drawable/arcmenu_diaryitem" />
+            android:src="@drawable/map_arcmenu_diaryitem" />
 
         <ImageView
             android:layout_width="144px"
             android:layout_height="144px"
-            android:src="@drawable/arcmenu_cousomized" />
+            android:src="@drawable/map_arcmenu_cousomized" />
 
         <ImageView
             android:layout_width="144px"
             android:layout_height="144px"
-            android:src="@drawable/arcmenu_login" />
+            android:src="@drawable/map_arcmenu_login" />
 
         <ImageView
             android:layout_width="250px"
             android:layout_height="250px"
-            android:src="@drawable/arcmenu_bt" />
+            android:src="@drawable/map_arcmenu_bt" />
     </com.exclusivetrace.exclusivetrace.arcmenu.ArcMenu>
 
 </LinearLayout>

@@ -41,19 +41,21 @@
         <!--请在application标签中声明service组件,每个app拥有自己单独的定位service。-->
         <service android:name="com.amap.api.location.APSService"></service>
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".Map.MainActivity"></activity>
+
+        <activity android:name=".welcome.Welcome">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <activity android:name=".AddDiary"/>
-        <activity android:name=".DiaryItem"/>
-        <activity android:name=".Customized"/>
-        <activity android:name=".Login"/>
-        <activity android:name=".ChangePwd"/>
-        
+
+        <activity android:name=".AddDiary" />
+        <activity android:name=".DiaryItem" />
+        <activity android:name=".Customized" />
+        <activity android:name=".Login" />
+        <activity android:name=".ChangePwd" />
+
         <meta-data
             android:name="com.amap.api.v2.apikey"
             android:value="61f39aff8c4efd82e7b03c8e72d10084">
