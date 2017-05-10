@@ -1,9 +1,6 @@
-package com.exclusivetrace.exclusivetrace.Map;
+package com.exclusivetrace.exclusivetrace.map;
 
 import android.graphics.PointF;
-import android.opengl.GLES10;
-import android.opengl.GLU;
-import android.os.SystemClock;
 
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.CameraUpdateFactory;

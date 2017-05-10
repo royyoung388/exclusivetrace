@@ -41,7 +41,13 @@
         <!--请在application标签中声明service组件,每个app拥有自己单独的定位service。-->
         <service android:name="com.amap.api.location.APSService"></service>
 
-        <activity android:name=".Map.MainActivity"></activity>
+        <activity android:name=".map.MainActivity"
+            android:launchMode="singleTask"></activity>
+        <service android:name=".map.LocationService">
+            <intent-filter>
+                <action android:name="com.exclusivetrace.exclusivetrace.map.LOCATION" />
+            </intent-filter>
+        </service>
 
         <activity android:name=".welcome.Welcome">
             <intent-filter>

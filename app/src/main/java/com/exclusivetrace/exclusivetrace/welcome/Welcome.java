@@ -7,7 +7,7 @@ import android.os.CountDownTimer;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.exclusivetrace.exclusivetrace.Map.MainActivity;
+import com.exclusivetrace.exclusivetrace.map.MainActivity;
 import com.exclusivetrace.exclusivetrace.R;
 
 /**

@@ -282,7 +282,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
             bt_add = findViewById(ADD_BT_ID);
         //按钮旋转动画
         if (!mStatus_arcmenu) {
-            rotateView(bt_add, 0f, 45f, 300);
+            rotateView(bt_add, 0f, 45f, 200);
             System.out.println("正向打开旋转");
         } else {
             rotateView(bt_add, 45f, 0f, 300);
@@ -630,7 +630,7 @@ public class ArcMenu extends ViewGroup implements View.OnClickListener {
                 loginAnim(100, true);
         } else {
             //打开按钮
-            rotateView(bt_add, 0f, 45f, 300);
+            rotateView(bt_add, 0f, 45f, 200);
             System.out.println("正向打开旋转");
             //子控件动画
             toggleMenu(200);

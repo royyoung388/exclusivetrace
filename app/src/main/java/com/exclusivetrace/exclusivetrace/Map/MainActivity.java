@@ -1,4 +1,4 @@
-package com.exclusivetrace.exclusivetrace.Map;
+package com.exclusivetrace.exclusivetrace.map;
 
 
 import android.animation.Animator;
@@ -6,18 +6,24 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.SyncStateContract;
-import android.support.annotation.NonNull;
+import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -25,28 +31,23 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroupOverlay;
-import android.view.ViewParent;
 import android.view.Window;
-import android.view.WindowManager;
 import android.view.animation.AnticipateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.amap.api.maps.AMap;
+import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.MapView;
-import com.amap.api.maps.model.AMapGLOverlay;
 import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.MarkerOptions;
-import com.amap.api.maps.model.PolygonOptions;
+import com.amap.api.maps.model.MyLocationStyle;
 import com.amap.api.maps.model.Polyline;
 import com.amap.api.maps.model.PolylineOptions;
-import com.amap.api.maps.model.Tile;
-import com.amap.api.maps.model.TileOverlayOptions;
-import com.amap.api.maps.model.TileProvider;
-import com.autonavi.ae.gmap.gloverlay.GLOverlay;
 import com.exclusivetrace.exclusivetrace.AddDiary;
 import com.exclusivetrace.exclusivetrace.ChangePwd;
 import com.exclusivetrace.exclusivetrace.Customized;
@@ -55,23 +56,51 @@ import com.exclusivetrace.exclusivetrace.Login;
 import com.exclusivetrace.exclusivetrace.R;
 import com.exclusivetrace.exclusivetrace.arcmenu.ArcMenu;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
 public class MainActivity extends Activity implements View.OnClickListener {
 
+    //UI
     private RelativeLayout root_layout, memoryLayout;
     private ImageView arcmenu_bt, startMemory, endMemory;
     private ArcMenu arcMenu;
     private PopupWindow popupWindow;
     private View view;
     private MapView mapView;
+
+    //判断是否开始记忆
+    private Boolean memory_status = false;
+
+    //Map
     private AMap aMap;
 
-    //判断开始按钮是否按下
-    private Boolean memory_status = false;
+    //poly
+    //PolylineOptions
+    private PolylineOptions lineOptions;
+    private Polyline polyline;
+    //LatLng
+    private LatLng latLng;
+    //time
+    private String time;
+
+    private LocationService.MyBinder binder;
+
+    private LocalBroadcastManager localBroadcastManager;
+    private MyBcReceiver localReceiver;
+
+    private ServiceConnection conn = new ServiceConnection() {
+
+        //Activity与Service断开连接时回调该方法
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            System.out.println("------Service DisConnected-------");
+        }
+
+        //Activity与Service连接成功时回调该方法
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            System.out.println("------Service Connected-------");
+            binder = (LocationService.MyBinder) service;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,15 +115,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         //在activity执行onCreate时执行mapView.onCreate(savedInstanceState)，创建地图
         mapView.onCreate(savedInstanceState);
         startMap();
+        //初始化PolylineOptions
+        initPolylineOptions();
 
         //aMap.setCustomRenderer(new MaskMapRender(aMap));
 
-        //添加面
-        //setPlane();
-        //添加线段
-        setLine();
         //添加Marker点
-        setMarker();
+        //setMarker();
     }
 
     //绑定控件，处理监听事件
@@ -121,8 +148,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
         //arcMenu.changeArcMenu();
         switch (v.getId()) {
             case R.id.map_memory_layout:
-                System.out.println("点击了开始按钮");
-                startMemoryAnimation();
+                if (memory_status) {
+                    //打开了
+                    //解除service绑定
+                    unbindService(conn);
+                    System.out.println("解除service绑定");
+                    localBroadcastManager.unregisterReceiver(localReceiver);
+                    System.out.println("注销BroadcastReceiver");
+                } else {
+                    //没有打开
+                    System.out.println("点击了开始按钮");
+                    startLocationService();
+                    registerBroadcast();
+                    startMemoryAnimation();
+                }
                 break;
             case R.id.map_arcmenu_bt:
                 //按钮旋转动画
@@ -132,54 +171,103 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
+    //开始定位的service
+    private void startLocationService() {
+        Intent intent = new Intent();
+        intent.setAction("com.exclusivetrace.exclusivetrace.map.LOCATION");
+        intent.setPackage("com.exclusivetrace.exclusivetrace");
+        //绑定service
+        bindService(intent, conn, Service.BIND_AUTO_CREATE);
+        System.out.println("开启定位service");
+    }
+
+    //动态注册广播
+    private void registerBroadcast() {
+        //初始化广播接收者，设置过滤器
+        if (localBroadcastManager == null)
+            localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        localReceiver = new MyBcReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("GETLOCATION");
+        localBroadcastManager.registerReceiver(localReceiver, intentFilter);
+        System.out.println("注册广播成功");
+    }
+
+    //初始化PolylineOptions
+    private void initPolylineOptions() {
+        lineOptions = new PolylineOptions();
+        lineOptions.width(10f);
+        lineOptions.color(Color.GRAY);
+    }
+
     //加载地图
     private void startMap() {
         //初始化地图控制器对象
         if (aMap == null) {
             aMap = mapView.getMap();
         }
+        //aMap.setLocationSource();// 设置定位监听
+        MyLocationStyle myLocationStyle = new MyLocationStyle();//初始化定位蓝点样式类
+        myLocationStyle.myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATION_ROTATE);//连续定位、且将视角移动到地图中心点，定位点依照设备方向旋转，并且会跟随设备移动。（1秒1次定位）如果不设置myLocationType，默认也会执行此种模式。
+        myLocationStyle.interval(1000); //设置连续定位模式下的定位间隔，只在连续定位模式下生效，单次定位模式下不会生效。单位为毫秒。
+        myLocationStyle.radiusFillColor(Color.parseColor("#2E7BDE9E"));
+        myLocationStyle.strokeColor(Color.parseColor("#2E7BDE9E"));
+        myLocationStyle.myLocationIcon(BitmapDescriptorFactory.fromResource(R.mipmap.map_location));
+        aMap.setMyLocationStyle(myLocationStyle);//设置定位蓝点的Style
+        //aMap.getUiSettings().setMyLocationButtonEnabled(true);设置默认定位按钮是否显示，非必需设置。
+        //aMap.setMyLocationType(AMap.LOCATION_TYPE_MAP_ROTATE);//设置定位模式旋转
+        aMap.setMyLocationEnabled(true);// 设置为true表示启动显示定位蓝点，false表示隐藏定位蓝点并不进行定位，默认是false。
     }
 
-    //添加线段
-    private void setLine() {
-        LatLng center = new LatLng(39.999391,116.135972);
-        double halfHeight = 1;
-        double halfWidth = 1;
-        List<LatLng> latLngs = new ArrayList<LatLng>();
-        latLngs.add(new LatLng(center.latitude - halfHeight, center.longitude - halfWidth));
-        latLngs.add(new LatLng(center.latitude - halfHeight, center.longitude + halfWidth));
-        latLngs.add(new LatLng(center.latitude + halfHeight, center.longitude + halfWidth));
-        latLngs.add(new LatLng(center.latitude + halfHeight, center.longitude - halfWidth));
-        aMap.addPolygon(new PolygonOptions()
-                .addAll(latLngs).fillColor(Color.argb(100, 255, 255, 255)).zIndex(1));
+    //自定义一个广播接收器
+    public class MyBcReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(final Context context, Intent intent) {
+            System.out.println("广播接收器");
+            latLng = binder.getLatLng();
+            System.out.println("接收到latLng:" + latLng.toString());
+            time = binder.getTime();
+            System.out.println("接收到time:" + time);
+            //移动镜头
+            //aMap.moveCamera(CameraUpdateFactory.changeLatLng(latLng));
+            //添加点，并绘画
+            lineOptions.add(latLng);
+            drawLine();
+        }
     }
 
-    //添加面
-    private void setPlane() {
-        LatLng center = new LatLng(39.999391,116.135972);
-        double halfHeight = 2;
-        double halfWidth = 2;
-        List<LatLng> latLngs = new ArrayList<LatLng>();
-        latLngs.add(new LatLng(center.latitude - halfHeight, center.longitude - halfWidth));
-        latLngs.add(new LatLng(center.latitude - halfHeight, center.longitude + halfWidth));
-        latLngs.add(new LatLng(center.latitude + halfHeight, center.longitude + halfWidth));
-        latLngs.add(new LatLng(center.latitude + halfHeight, center.longitude - halfWidth));
-        aMap.addPolygon(new PolygonOptions()
-                .addAll(latLngs).fillColor(Color.argb(100, 100, 100, 100)).strokeColor(Color.RED).strokeWidth(1).zIndex(1));
+    //画线
+    private void drawLine() {
+        if (lineOptions.getPoints().size() > 1) {
+            polyline = aMap.addPolyline(lineOptions);
+            System.out.println("画线成功");
+        }
+    }
 
-        //return latLngs;
+    //双击退出
+    private long mPressedTime = 0;
+    @Override
+    public void onBackPressed() {
+        long mNowTime = System.currentTimeMillis();//获取第一次按键时间
+        if ((mNowTime - mPressedTime) > 2000) {//比较两次按键时间差
+            Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+            mPressedTime = mNowTime;
+        } else {//退出程序
+            this.finish();
+            System.exit(0);
+        }
     }
 
     //添加marker点
     private void setMarker() {
-        LatLng latLng = new LatLng(39.999391,116.135972);
+        LatLng latLng = new LatLng(39.999391, 116.135972);
         //aMap.addMarker(new MarkerOptions().position(latLng).title("北京").snippet("DefaultMarker"));
         MarkerOptions markerOption = new MarkerOptions();
         markerOption.position(latLng);
         markerOption.title("北京").snippet("DefaultMarker");
 
         markerOption.draggable(false);//设置Marker no可拖动
-        markerOption.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.maker)));
+        //markerOption.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.maker)));
         // 将Marker设置为贴地显示，可以双指下拉地图查看效果
         markerOption.setFlat(true);//设置marker平贴地图效果
         markerOption.alpha(0.5f);
@@ -191,6 +279,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onDestroy();
         //在activity执行onDestroy时执行mapView.onDestroy()，销毁地图
         mapView.onDestroy();
+        if (memory_status) {
+            //解除service绑定
+            unbindService(conn);
+            System.out.println("解除service绑定");
+            localBroadcastManager.unregisterReceiver(localReceiver);
+        }
     }
 
     @Override
